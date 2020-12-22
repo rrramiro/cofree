@@ -1,6 +1,6 @@
 
-import doobie.imports._
-import scalaz._, Scalaz._
+import cats._
+import cats.implicits._
 import shapeless._
 import shapeless.nat._
 import shapeless.ops.nat._

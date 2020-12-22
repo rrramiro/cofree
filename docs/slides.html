@@ -19,19 +19,6 @@
   <body>
     <textarea id="source">
 
-```tut:invisible
-import atto._, Atto._, atto.compat.scalaz._
-import scalaz._, Scalaz.{ char => _, _ }, scalaz.effect._
-import doobie.imports._
-import doobie.contrib.postgresql.pgtypes._
-import doobie.tsql._
-import doobie.tsql.postgres._
-
-object Extras extends Extras
-import Extras._
-import cofree.xa
-```
-
 class: center, middle
 
 <h1>Pure Functional Database Programming<br>… with Fixpoint Types</h1>
@@ -71,7 +58,7 @@ Ok so let's look at a recursive data type.
 
 A recursive data type for professors and their Ph.D. students.
 
-```tut:silent
+```scala mdoc:silent
 case class Prof(
   name: String,
   year: Int,
@@ -93,7 +80,7 @@ case class Prof(
 
 A recursive data type for professors and their Ph.D. students.
 
-```tut:silent
+```scala mdoc:silent:reset
 case class Prof(
   name: String,
   year: Int,
@@ -129,7 +116,7 @@ CREATE TABLE prof (
 
 A recursive data type for professors and their Ph.D. students.
 
-```tut:silent
+```scala mdoc:silent:reset
 case class Prof(
   id : Int,
   name: String,
@@ -164,7 +151,7 @@ CREATE TABLE prof (
 
 A recursive data type for professors and their Ph.D. students.
 
-```tut:silent
+```scala mdoc:silent:reset
 case class Prof(
   id : Option[Int],
   name: String,
@@ -195,7 +182,7 @@ So a way to make the id less invasive is to externalize it.
 
 A recursive data type for professors and their Ph.D. students.
 
-```tut:silent
+```scala mdoc:silent:reset
 case class Prof(
   name: String,
   year: Int,
@@ -219,7 +206,7 @@ type IdProf = (Int, Prof)
 
 A recursive data type for professors and their Ph.D. students.
 
-```tut:silent
+```scala mdoc:silent:reset
 case class Prof(
   name: String,
   year: Int,
@@ -242,7 +229,7 @@ type IdProf = (Int, Prof)
 
 A ~~recursive~~ data type for professors and their Ph.D. students.
 
-```tut:silent
+```scala mdoc:silent:reset
 case class ProfF[A](
   name: String,
   year: Int,
@@ -250,7 +237,7 @@ case class ProfF[A](
 )
 ```
 
-```tut:silent:fail
+```scala mdoc:silent:fail
 type Prof   = ProfF[ProfF]
 type IdProf = (Int, ProfF[(Int, ProfF)])
 ```
@@ -269,7 +256,7 @@ type IdProf = (Int, ProfF[(Int, ProfF)])
 
 A ~~recursive~~ data type for professors and their Ph.D. students.
 
-```tut:silent
+```scala mdoc:silent:reset
 case class ProfF[A](
   name: String,
   year: Int,
@@ -277,9 +264,9 @@ case class ProfF[A](
 )
 ```
 
-```tut:silent:fail
-type Prof   = ProfF[ProfF[ProfF[ProfF[ProfF[ProfF[ProfF[ProfF[ProfF[ProfF[ProfF[ProfF[ProfF[ProfF[ProfF[ProfF[ProfF[
-type IdProf = (Int, ProfF[(Int, ProfF[(Int, ProfF[(Int, ProfF[(Int, ProfF[(Int, ProfF[(Int, ProfF[(Int, ProfF[(Int,
+```scala mdoc:silent:fail
+// type Prof   = ProfF[ProfF[ProfF[ProfF[ProfF[ProfF[ProfF[ProfF[ProfF[ProfF[ProfF[ProfF[ProfF[ProfF[ProfF[ProfF[ProfF[...
+// type IdProf = (Int, ProfF[(Int, ProfF[(Int, ProfF[(Int, ProfF[(Int, ProfF[(Int, ProfF[(Int, ProfF[(Int, ProfF[(Int,...
 ```
 
 <img align=right src="prof.png"/>
@@ -296,7 +283,7 @@ type IdProf = (Int, ProfF[(Int, ProfF[(Int, ProfF[(Int, ProfF[(Int, ProfF[(Int, 
 
 A ~~recursive~~ data type for professors and their Ph.D. students.
 
-```tut:silent
+```scala mdoc:silent:reset
 case class ProfF[A](
   name: String,
   year: Int,
@@ -304,7 +291,7 @@ case class ProfF[A](
 )
 ```
 
-```tut:silent:fail
+```scala mdoc:silent:fail
 type Prof   = ProfF[Prof]
 type IdProf = (Int, ProfF[IdProf])
 ```
@@ -323,7 +310,7 @@ type IdProf = (Int, ProfF[IdProf])
 
 A ~~recursive~~ data type for professors and their Ph.D. students.
 
-```tut:silent
+```scala mdoc:silent:reset
 case class ProfF[A](
   name: String,
   year: Int,
@@ -331,7 +318,7 @@ case class ProfF[A](
 )
 ```
 
-```tut:silent
+```scala mdoc:silent
 case class Prof(value: ProfF[Prof])
 case class IdProf(id: Int, value: ProfF[IdProf])
 ```
@@ -350,7 +337,7 @@ case class IdProf(id: Int, value: ProfF[IdProf])
 
 A ~~recursive~~ data type for professors and their Ph.D. students.
 
-```tut:silent
+```scala mdoc:silent:reset
 case class ProfF[A](
   name: String,
   year: Int,
@@ -358,7 +345,7 @@ case class ProfF[A](
 )
 ```
 
-```tut:silent:fail
+```scala mdoc:silent:fail
 case class Prof[F[_]](value: F[Prof])
 case class IdProf[F[_]](id: Int, value: F[IdProf])
 ```
@@ -373,7 +360,7 @@ case class IdProf[F[_]](id: Int, value: F[IdProf])
 
 A ~~recursive~~ data type for professors and their Ph.D. students.
 
-```tut:silent
+```scala mdoc:silent:reset
 case class ProfF[A](
   name: String,
   year: Int,
@@ -381,7 +368,7 @@ case class ProfF[A](
 )
 ```
 
-```tut:silent
+```scala mdoc:silent
 case class Prof[F[_]](value: F[Prof[F]])
 case class IdProf[F[_]](id: Int, value: F[IdProf[F]])
 ```
@@ -396,7 +383,7 @@ case class IdProf[F[_]](id: Int, value: F[IdProf[F]])
 
 A ~~recursive~~ data type for professors and their Ph.D. students.
 
-```tut:silent
+```scala mdoc:silent:reset
 case class ProfF[A](
   name: String,
   year: Int,
@@ -404,7 +391,7 @@ case class ProfF[A](
 )
 ```
 
-```tut:silent
+```scala mdoc:silent
 case class Prof[F[_]](value: F[Prof[F]])
 case class IdProf[F[_], A](id: A, value: F[IdProf[F, A]])
 ```
@@ -434,7 +421,7 @@ class: center, middle
 
 A ~~recursive~~ data type for professors and their Ph.D. students.
 
-```tut:silent
+```scala mdoc:silent:reset
 case class ProfF[A](
   name: String,
   year: Int,
@@ -442,7 +429,7 @@ case class ProfF[A](
 )
 ```
 
-```tut:silent
+```scala mdoc:silent
 case class Fix[F[_]](unfix: F[Fix[F]])
 case class Cofree[F[_], A](head: A, tail: F[Cofree[F, A]])
 ```
@@ -459,7 +446,7 @@ case class Cofree[F[_], A](head: A, tail: F[Cofree[F, A]])
 
 A ~~recursive~~ data type for professors and their Ph.D. students.
 
-```tut:silent
+```scala mdoc:silent:reset
 case class ProfF[A](
   name: String,
   year: Int,
@@ -467,10 +454,10 @@ case class ProfF[A](
 )
 ```
 
-```tut:silent
+```scala mdoc:silent
 case class Fix[F[_]](unfix: F[Fix[F]])
 case class Cofree[F[_], A](head: A, tail: F[Cofree[F, A]])
-case class Hmmm[F[_], A](hmmmmmm: A \/ F[Hmmm[F, A]])
+case class Hmmm[F[_], A](hmmmmmm: Either[A, F[Hmmm[F, A]]])
 ```
 
 ???
@@ -484,7 +471,7 @@ case class Hmmm[F[_], A](hmmmmmm: A \/ F[Hmmm[F, A]])
 
 A ~~recursive~~ data type for professors and their Ph.D. students.
 
-```tut:silent
+```scala mdoc:silent:reset
 case class ProfF[A](
   name: String,
   year: Int,
@@ -492,10 +479,10 @@ case class ProfF[A](
 )
 ```
 
-```tut:silent
+```scala mdoc:silent
 case class Fix[F[_]](unfix: F[Fix[F]])
 case class Cofree[F[_], A](head: A, tail: F[Cofree[F, A]])
-case class Free[F[_], A](resume: A \/ F[Free[F, A]])
+case class Free[F[_], A](resume: Either[A, F[Free[F, A]]])
 ```
 
 ???
@@ -529,7 +516,7 @@ case class Free[F[_], A](resume: A \/ F[Free[F, A]])
 
 A ~~recursive~~ data type for professors and their Ph.D. students.
 
-```tut:silent
+```scala mdoc:silent:reset
 case class ProfF[A](
   name: String,
   year: Int,
@@ -537,18 +524,19 @@ case class ProfF[A](
 )
 ```
 
-```tut:silent
+```scala mdoc:silent
 case class Fix[F[_]](unfix: F[Fix[F]])
 case class Cofree[F[_], A](head: A, tail: F[Cofree[F, A]])
-case class Free[F[_], A](resume: A \/ F[Free[F, A]])
+case class Free[F[_], A](resume: Either[A, F[Free[F, A]]])
 ```
 
-```tut:silent
+```scala mdoc:silent:reset
+case class Fix[F[_]](unfix: F[Fix[F]])
 case class CofreeF[F[_], A, B](head: A, tail: F[B])
-case class FreeF[F[_], A, B](resume: A \/ F[B])
+case class FreeF[F[_], A, B](resume: Either[A, F[B]])
 
-type Cofree[F[_], A] = Fix[CofreeF[F, A, ?]]
-type Free[F[_], A] = Fix[FreeF[F, A, ?]]
+type Cofree[F[_], A] = Fix[CofreeF[F, A, *]]
+type Free[F[_], A] = Fix[FreeF[F, A, *]]
 ```
 
 ???
@@ -564,7 +552,7 @@ type Free[F[_], A] = Fix[FreeF[F, A, ?]]
 
 A ~~recursive~~ data type for professors and their Ph.D. students.
 
-```tut:silent
+```scala mdoc:silent:reset
 case class ProfF[A](
   name: String,
   year: Int,
@@ -572,14 +560,14 @@ case class ProfF[A](
 )
 ```
 
-```tut:silent
+```scala mdoc:silent
 case class Fix[F[_]](unfix: F[Fix[F]])
 case class Cofree[F[_], A](head: A, tail: F[Cofree[F, A]])
 ```
 
 Annotated and un-annotated `ProfF` trees.
 
-```tut:silent
+```scala mdoc:silent
 type Prof   = Fix[ProfF]
 type IdProf = Cofree[ProfF, Int]
 ```
@@ -592,7 +580,7 @@ type IdProf = Cofree[ProfF, Int]
 
 # Recursive Data
 
-```tut:silent
+```scala mdoc:silent:reset
 case class Prof(name: String, year: Int, students: List[Prof])
 
 
@@ -618,8 +606,9 @@ val p: Prof =
 
 # Recursive Data
 
-```tut:silent
+```scala mdoc:silent:reset
 case class ProfF[A](name: String, year: Int, students: List[A])
+case class Fix[F[_]](unfix: F[Fix[F]])
 type Prof = Fix[ProfF]
 
 val p: Prof =
@@ -644,8 +633,9 @@ val p: Prof =
 
 # Recursive Data
 
-```tut:silent
+```scala mdoc:silent:reset
 case class ProfF[A](name: String, year: Int, students: List[A])
+case class Cofree[F[_], A](head: A, tail: F[Cofree[F, A]])
 type IdProf = Cofree[ProfF, Int]
 
 val p: IdProf =
@@ -684,7 +674,7 @@ class: center, middle
 
 # Programming with Fix and Cofree
 
-```tut:silent
+```scala mdoc:silent:reset
 case class ProfF[A](name: String, year: Int, students: List[A])
 
 val data =
@@ -718,13 +708,16 @@ So, here's some sample data that we want to parse into our fixpoint types. You m
 
 # Programming with Fix and Cofree
 
-```tut:invisible
+```scala mdoc:invisible:reset
+import atto._
+import Atto._
+case class Fix[F[_]](unfix: F[Fix[F]])
 case class ProfF[A](name: String, year: Int, students: List[A]) {
   override def toString = s"ProfF($name, $year, «${students.length}»)"
 }
 ```
 
-```tut:silent
+```scala mdoc:silent
 def prof(n: Int): Parser[Fix[ProfF]] =
   for {
     _    <- manyN(n, char(' '))     // skip 'n' spaces
@@ -744,7 +737,37 @@ def prof(n: Int): Parser[Fix[ProfF]] =
 
 # Programming with Fix and Cofree
 
-```tut:silent
+```scala mdoc:invisible:reset
+import atto._
+import Atto._
+case class Fix[F[_]](unfix: F[Fix[F]])
+case class ProfF[A](name: String, year: Int, students: List[A]) {
+  override def toString = s"ProfF($name, $year, «${students.length}»)"
+}
+val data =
+  """|Simeon Denis Poisson, 1800
+     |  Gustav Peter Lejeune Dirichlet, 1827
+     |    Rudolf Otto Sigismund Lipschitz, 1853
+     |      C. Felix (Christian) Klein, 1868
+     |        William Edward Story, 1875
+     |          Solomon Lefschetz, 1911
+     |            Albert William Tucker, 1932
+     |              Marvin Lee Minsky, 1954
+     |                Gerald Jay Sussman, 1973
+     |                  Guy Lewis Steele, 1980
+     |                    Philip Lee Wadler, 1984
+     |        C. L. Ferdinand (Carl Louis) Lindemann, 1873
+     |          David Hilbert, 1885
+     |            Wilhelm Ackermann, 1925
+     |            Haskell Curry, 1930
+     |            Hermann Weyl, 1908
+     |              Saunders Mac Lane, 1934
+     |                Steven Awodey, 1997
+     |                William Howard, 1956
+     |""".stripMargin
+```
+
+```scala mdoc:silent
 def prof(n: Int): Parser[Fix[ProfF]] =
   for {
     _    <- manyN(n, char(' '))     // skip 'n' spaces
@@ -756,7 +779,7 @@ def prof(n: Int): Parser[Fix[ProfF]] =
   } yield Fix(ProfF(name, year, ss))
 ```
 
-```tut
+```scala mdoc
 prof(0).parseOnly(data).option
 ```
 
@@ -769,9 +792,9 @@ prof(0).parseOnly(data).option
 
 # Programming with Fix and Cofree
 
-```tut:invisible
+```scala mdoc:invisible
 def drawFix(fa: Fix[ProfF]): Unit = {
-  def go(fa: Fix[ProfF], indent: Int = 0): Unit = {
+  def go(fa: Fix[ProfF], indent: Int): Unit = {
     print(" " * indent)
     println(fa.unfix)
     fa.unfix.students.foreach(go(_, indent + 1))
@@ -780,7 +803,7 @@ def drawFix(fa: Fix[ProfF]): Unit = {
 }
 ```
 
-```tut
+```scala mdoc
 prof(0).parseOnly(data).option.foreach(drawFix)
 ```
 
@@ -793,7 +816,17 @@ prof(0).parseOnly(data).option.foreach(drawFix)
 
 # Programming with Fix and Cofree
 
-```tut:silent
+```scala mdoc:invisible:reset
+import atto._
+import Atto._
+case class Fix[F[_]](unfix: F[Fix[F]])
+case class Cofree[F[_], A](head: A, tail: F[Cofree[F, A]])
+case class ProfF[A](name: String, year: Int, students: List[A]) {
+  override def toString = s"ProfF($name, $year, «${students.length}»)"
+}
+```
+
+```scala mdoc:silent
 def prof(n: Int): Parser[Fix[ProfF]] =
   for {
 
@@ -815,7 +848,17 @@ def prof(n: Int): Parser[Fix[ProfF]] =
 
 # Programming with Fix and Cofree
 
-```tut:silent
+```scala mdoc:invisible:reset
+import atto._
+import Atto._
+case class Fix[F[_]](unfix: F[Fix[F]])
+case class Cofree[F[_], A](head: A, tail: F[Cofree[F, A]])
+case class ProfF[A](name: String, year: Int, students: List[A]) {
+  override def toString = s"ProfF($name, $year, «${students.length}»)"
+}
+```
+
+```scala mdoc:silent
 def posProf(n: Int): Parser[Cofree[ProfF, (Int, Int)]] =
   for {
     p0   <- pos
@@ -837,7 +880,38 @@ def posProf(n: Int): Parser[Cofree[ProfF, (Int, Int)]] =
 
 # Programming with Fix and Cofree
 
-```tut:silent
+```scala mdoc:invisible:reset
+import atto._
+import Atto._
+case class Fix[F[_]](unfix: F[Fix[F]])
+case class Cofree[F[_], A](head: A, tail: F[Cofree[F, A]])
+case class ProfF[A](name: String, year: Int, students: List[A]) {
+  override def toString = s"ProfF($name, $year, «${students.length}»)"
+}
+val data =
+  """|Simeon Denis Poisson, 1800
+     |  Gustav Peter Lejeune Dirichlet, 1827
+     |    Rudolf Otto Sigismund Lipschitz, 1853
+     |      C. Felix (Christian) Klein, 1868
+     |        William Edward Story, 1875
+     |          Solomon Lefschetz, 1911
+     |            Albert William Tucker, 1932
+     |              Marvin Lee Minsky, 1954
+     |                Gerald Jay Sussman, 1973
+     |                  Guy Lewis Steele, 1980
+     |                    Philip Lee Wadler, 1984
+     |        C. L. Ferdinand (Carl Louis) Lindemann, 1873
+     |          David Hilbert, 1885
+     |            Wilhelm Ackermann, 1925
+     |            Haskell Curry, 1930
+     |            Hermann Weyl, 1908
+     |              Saunders Mac Lane, 1934
+     |                Steven Awodey, 1997
+     |                William Howard, 1956
+     |""".stripMargin
+```
+
+```scala mdoc:silent
 def posProf(n: Int): Parser[Cofree[ProfF, (Int, Int)]] =
   for {
     p0   <- pos
@@ -851,7 +925,7 @@ def posProf(n: Int): Parser[Cofree[ProfF, (Int, Int)]] =
   } yield Cofree((p0, p1), ProfF(name, year, ss))
 ```
 
-```tut
+```scala mdoc
 posProf(0).parseOnly(data).option
 ```
 
@@ -863,18 +937,18 @@ posProf(0).parseOnly(data).option
 
 # Programming with Fix and Cofree
 
-```tut:invisible
+```scala mdoc:invisible
 def drawCofree[A](fa: Cofree[ProfF, A]): Unit = {
-  def go(fa: Cofree[ProfF, A], indent: Int = 0): Unit = {
+  def go(fa: Cofree[ProfF, A], indent: Int): Unit = {
     print(" " * indent)
-    println(fa.head + " :< " + fa.tail)
+    println(s"${fa.head} :< ${fa.tail}")
     fa.tail.students.foreach(go(_, indent + 1))
   }
   go(fa, 0)
 }
 ```
 
-```tut
+```scala mdoc
 posProf(0).parseOnly(data).option.foreach(drawCofree)
 ```
 
@@ -895,14 +969,18 @@ class: center, middle
 ---
 
 # So Why the F?
+```scala mdoc:invisible:reset
+import cats._
+import cats.implicits._
+```
 
-```tut:silent
+```scala mdoc:silent
 case class ProfF[A](name: String, year: Int, students: List[A])
 ```
 
 `ProfF` is a functor. This means we can map over it.
 
-```tut:silent
+```scala mdoc:silent
 implicit val ProfFFunctor: Functor[ProfF] =
   new Functor[ProfF] {
     def map[A, B](fa: ProfF[A])(f: A => B): ProfF[B] =
@@ -912,7 +990,7 @@ implicit val ProfFFunctor: Functor[ProfF] =
 
 Thus.
 
-```tut
+```scala mdoc
 val ps = ProfF("Bob", 1976, List("foo", "bar"))
 ps.map(s => s.length)
 ```
@@ -926,24 +1004,29 @@ ps.map(s => s.length)
 ---
 
 # But wait, there's more!
+```scala mdoc:invisible:reset
+import cats._
+import cats.implicits._
+```
 
-```tut:silent
+```scala mdoc:silent
 case class ProfF[A](name: String, year: Int, students: List[A])
 ```
 
 `ProfF` is a *traversable* functor. This means we can sequence it.
 
-```tut:silent
-implicit val ProfFTraverse: Traverse[ProfF] =
-  new Traverse[ProfF] {
-    def traverseImpl[G[_]: Applicative, A, B](fa: ProfF[A])(f: A => G[B]): G[ProfF[B]] =
-      fa.students.traverse(f).map(ss => fa.copy(students = ss))
-  }
+```scala mdoc:silent
+implicit val ProfFTraverse: Traverse[ProfF] = new Traverse[ProfF] {
+  override def traverse[G[_]: Applicative, A, B](fa: ProfF[A])(f: A => G[B]): G[ProfF[B]] =
+    fa.students.traverse(f).map(ss => fa.copy(students = ss))
+  override def foldLeft[A, B](fa: ProfF[A],b: B)(f: (B, A) => B): B = fa.students.foldLeft(b)(f)
+  override def foldRight[A, B](fa: ProfF[A],lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] = fa.students.foldRight(lb)(f)
+}
 ```
 
 Thus.
 
-```tut
+```scala mdoc
 val p = ProfF("Bob", 1975, List(Option(1), Option(2)))
 p.sequence
 ```
@@ -1069,19 +1152,24 @@ class: center, middle
 
 Recall our `ProfF` type.
 
-```scala
+```scala mdoc:invisible:reset
+import doobie._
+import doobie.implicits._
+```
+
+```scala mdoc
 case class ProfF[A](name: String, year: Int, students: List[A])
 ```
 
 Construct a program to insert a `ProfF`, ignoring children, returning its generated id.
 
-```tut:silent
+```scala mdoc:silent
 def insertNode(op: Option[Int], p: ProfF[_]): ConnectionIO[Int] =
-  tsql"""
+  sql"""
     INSERT INTO prof (parent, name, year)
     VALUES ($op, ${p.name}, ${p.year})
     RETURNING id
-  """.unique[Int]
+  """.query[Int].unique
 ```
 
 ???
@@ -1097,13 +1185,21 @@ def insertNode(op: Option[Int], p: ProfF[_]): ConnectionIO[Int] =
 
 Construct a program to insert a `ProfF`, ignoring children, returning its generated id.
 
-```tut:silent
+```scala mdoc:invisible:reset
+import doobie._
+import doobie.implicits._
+case class ProfF[A](name: String, year: Int, students: List[A]){
+  override def toString = s"ProfF($name, $year, «${students.length}»)"
+}
+```
+
+```scala mdoc:silent
 def insertNode(op: Option[Int], p: ProfF[_]): ConnectionIO[Int] =
-  tsql"""
+  sql"""
     INSERT INTO prof (parent, name, year)
     VALUES ($op, ${p.name}, ${p.year})
     RETURNING id
-  """.unique[Int]
+  """.query[Int].unique
 ```
 
 ???
@@ -1115,18 +1211,42 @@ def insertNode(op: Option[Int], p: ProfF[_]): ConnectionIO[Int] =
 
 Construct a program to insert a `ProfF`, ignoring children, returning its generated id.
 
-```tut:silent
+```scala mdoc:invisible:reset
+import cats._
+import cats.implicits._
+import doobie._
+import doobie.implicits._
+case class Fix[F[_]](unfix: F[Fix[F]])
+case class Cofree[F[_], A](head: A, tail: F[Cofree[F, A]])
+case class ProfF[A](name: String, year: Int, students: List[A]){
+  override def toString = s"ProfF($name, $year, «${students.length}»)"
+}
+   implicit val ProfFTraverse: Traverse[ProfF] =
+      new Traverse[ProfF] {
+
+        override def traverse[G[_]: Applicative, A, B](fa: ProfF[A])(f: A => G[B]): G[ProfF[B]] =
+          fa.students.map(f).sequence.map(ss => fa.copy(students = ss))
+
+        override def foldLeft[A, B](fa: ProfF[A], b: B)(f: (B, A) => B): B =
+          fa.students.foldLeft(b)(f)
+
+        override def foldRight[A, B](fa: ProfF[A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] =
+          fa.students.foldRight(lb)(f)
+      }
+```
+
+```scala mdoc:silent
 def insertNode(op: Option[Int], p: ProfF[_]): ConnectionIO[Int] =
-  tsql"""
+  sql"""
     INSERT INTO prof (parent, name, year)
     VALUES ($op, ${p.name}, ${p.year})
     RETURNING id
-  """.unique[Int]
+  """.query[Int].unique
 ```
 
 Construct a program to insert a `Fix[ProfF]` and return an equivalent `Cofree` annotated with generated ids.
 
-```tut:silent
+```scala mdoc:silent
 def insertTree(op: Option[Int], fp: Fix[ProfF]): ConnectionIO[Cofree[ProfF, Int]] =
   for {
     h <- insertNode(op, fp.unfix)       // ConnectionIO[Int]
@@ -1149,18 +1269,42 @@ def insertTree(op: Option[Int], fp: Fix[ProfF]): ConnectionIO[Cofree[ProfF, Int]
 
 Construct a program to insert a `ProfF`, ignoring children, returning its generated id.
 
-```tut:silent
+```scala mdoc:invisible:reset
+import cats._
+import cats.implicits._
+import doobie._
+import doobie.implicits._
+case class Fix[F[_]](unfix: F[Fix[F]])
+case class Cofree[F[_], A](head: A, tail: F[Cofree[F, A]])
+case class ProfF[A](name: String, year: Int, students: List[A]){
+  override def toString = s"ProfF($name, $year, «${students.length}»)"
+}
+   implicit val ProfFTraverse: Traverse[ProfF] =
+      new Traverse[ProfF] {
+
+        override def traverse[G[_]: Applicative, A, B](fa: ProfF[A])(f: A => G[B]): G[ProfF[B]] =
+          fa.students.map(f).sequence.map(ss => fa.copy(students = ss))
+
+        override def foldLeft[A, B](fa: ProfF[A], b: B)(f: (B, A) => B): B =
+          fa.students.foldLeft(b)(f)
+
+        override def foldRight[A, B](fa: ProfF[A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] =
+          fa.students.foldRight(lb)(f)
+      }
+```
+
+```scala mdoc:silent
 def insertNode(op: Option[Int], p: ProfF[_]): ConnectionIO[Int] =
-  tsql"""
+  sql"""
     INSERT INTO prof (parent, name, year)
     VALUES ($op, ${p.name}, ${p.year})
     RETURNING id
-  """.unique[Int]
+  """.query[Int].unique
 ```
 
 Construct a program to insert a `Fix[ProfF]` and return an equivalent `Cofree` annotated with generated ids.
 
-```tut:silent
+```scala mdoc:silent
 def insertTree(op: Option[Int], fp: Fix[ProfF]): ConnectionIO[Cofree[ProfF, Int]] =
   for {
     h <- insertNode(op, fp.unfix)
@@ -1177,32 +1321,76 @@ def insertTree(op: Option[Int], fp: Fix[ProfF]): ConnectionIO[Cofree[ProfF, Int]
 
 # Insert a Tree
 
-```tut:invisible
-// redefine due to shadowing
-case class ProfF[A](name: String, year: Int, students: List[A]) {
+```scala mdoc:invisible:reset
+import atto._
+import Atto._
+import cats._
+import cats.effect.IO
+import cats.implicits._
+import doobie._
+import doobie.implicits._
+import scala.concurrent.ExecutionContext
+case class Fix[F[_]](unfix: F[Fix[F]])
+case class Cofree[F[_], A](head: A, tail: F[Cofree[F, A]])
+case class ProfF[A](name: String, year: Int, students: List[A]){
   override def toString = s"ProfF($name, $year, «${students.length}»)"
 }
-implicit val PersonTraverse: Traverse[ProfF] =
-  new Traverse[ProfF] {
-    def traverseImpl[G[_]: Applicative, A, B](fa: ProfF[A])(f: A => G[B]): G[ProfF[B]] =
-      fa.students.traverse(f).map(ss => fa.copy(students = ss))
-  }
+   implicit val ProfFTraverse: Traverse[ProfF] =
+      new Traverse[ProfF] {
+
+        override def traverse[G[_]: Applicative, A, B](fa: ProfF[A])(f: A => G[B]): G[ProfF[B]] =
+          fa.students.map(f).sequence.map(ss => fa.copy(students = ss))
+
+        override def foldLeft[A, B](fa: ProfF[A], b: B)(f: (B, A) => B): B =
+          fa.students.foldLeft(b)(f)
+
+        override def foldRight[A, B](fa: ProfF[A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] =
+          fa.students.foldRight(lb)(f)
+      }
+val data =
+  """|Simeon Denis Poisson, 1800
+     |  Gustav Peter Lejeune Dirichlet, 1827
+     |    Rudolf Otto Sigismund Lipschitz, 1853
+     |      C. Felix (Christian) Klein, 1868
+     |        William Edward Story, 1875
+     |          Solomon Lefschetz, 1911
+     |            Albert William Tucker, 1932
+     |              Marvin Lee Minsky, 1954
+     |                Gerald Jay Sussman, 1973
+     |                  Guy Lewis Steele, 1980
+     |                    Philip Lee Wadler, 1984
+     |        C. L. Ferdinand (Carl Louis) Lindemann, 1873
+     |          David Hilbert, 1885
+     |            Wilhelm Ackermann, 1925
+     |            Haskell Curry, 1930
+     |            Hermann Weyl, 1908
+     |              Saunders Mac Lane, 1934
+     |                Steven Awodey, 1997
+     |                William Howard, 1956
+     |""".stripMargin
+
+implicit val cs = IO.contextShift(ExecutionContext.global)
+  val xa = Transactor.fromDriverManager[IO](
+    "org.postgresql.Driver",// driver
+    "jdbc:postgresql:prof", // database
+    "postgres", ""          // user, password
+  )
 ```
 
 Construct a program to insert a `ProfF`, ignoring children, returning its generated id.
 
-```tut:silent
+```scala mdoc:silent
 def insertNode(op: Option[Int], p: ProfF[_]): ConnectionIO[Int] =
-  tsql"""
+  sql"""
     INSERT INTO prof (parent, name, year)
     VALUES ($op, ${p.name}, ${p.year})
     RETURNING id
-  """.unique[Int]
+  """.query[Int].unique
 ```
 
 Construct a program to insert a `Fix[ProfF]` and return an equivalent `Cofree` annotated with generated ids.
 
-```tut:silent
+```scala mdoc:silent
 def insertTree(op: Option[Int], fp: Fix[ProfF]): ConnectionIO[Cofree[ProfF, Int]] =
   for {
     h <- insertNode(op, fp.unfix)
@@ -1218,7 +1406,7 @@ def insertTree(op: Option[Int], fp: Fix[ProfF]): ConnectionIO[Cofree[ProfF, Int]
 
 # Insert a Tree
 
-```tut:invisible
+```scala mdoc:invisible
 // redefine due to shadowing
 
 def prof(n: Int): Parser[Fix[ProfF]] =
@@ -1234,15 +1422,16 @@ def prof(n: Int): Parser[Fix[ProfF]] =
 def ioDrawCofree[F[_]: Traverse, A](fa: Cofree[F, A], indent: Int = 0): IO[Unit] =
   for {
     _ <- IO(print(" " * indent))
-    _ <- IO(println(fa.head + " :< " + fa.tail))
+    _ <- IO(println(s"${fa.head} :< ${fa.tail}"))
     _ <- fa.tail.traverse(ioDrawCofree(_, indent + 1))
   } yield ()
 ```
-
-```tut
+```scala mdoc:silent
 val p = prof(0).parseOnly(data).option.get // yolo
 val io = insertTree(None, p).transact(xa).flatMap(c => ioDrawCofree(c))
-io.unsafePerformIO
+```
+```scala mdoc
+io.unsafeRunSync()
 ```
 
 ???
@@ -1259,11 +1448,11 @@ io.unsafePerformIO
 
 Construct a program to read a `ProfF` whose students are `Int` ... ?
 
-```tut:silent
+```scala mdoc:silent
 def readNode(id: Int): ConnectionIO[ProfF[Int]] =
   for {
-    d  <- tsql"SELECT name, year FROM prof WHERE id = $id".unique[(String, Int)]
-    ss <- tsql"SELECT id FROM prof WHERE parent = $id".as[List[Int]]
+    d  <- sql"SELECT name, year FROM prof WHERE id = $id".query[(String, Int)].unique
+    ss <- sql"SELECT id FROM prof WHERE parent = $id".query[Int].to[List]
   } yield ProfF(d._1, d._2, ss)
 ```
 
@@ -1278,18 +1467,39 @@ def readNode(id: Int): ConnectionIO[ProfF[Int]] =
 # And now read it back.
 
 Construct a program to read a `ProfF` whose students are database ids.
+```scala mdoc:invisible:reset
+import cats._
+import cats.implicits._
+import doobie._
+import doobie.implicits._
+case class ProfF[A](name: String, year: Int, students: List[A]){
+  override def toString = s"ProfF($name, $year, «${students.length}»)"
+}
+   implicit val ProfFTraverse: Traverse[ProfF] =
+      new Traverse[ProfF] {
 
-```tut:silent
+        override def traverse[G[_]: Applicative, A, B](fa: ProfF[A])(f: A => G[B]): G[ProfF[B]] =
+          fa.students.map(f).sequence.map(ss => fa.copy(students = ss))
+
+        override def foldLeft[A, B](fa: ProfF[A], b: B)(f: (B, A) => B): B =
+          fa.students.foldLeft(b)(f)
+
+        override def foldRight[A, B](fa: ProfF[A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] =
+          fa.students.foldRight(lb)(f)
+      }
+```
+
+```scala mdoc:silent
 def readNode(id: Int): ConnectionIO[ProfF[Int]] =
   for {
-    d  <- tsql"SELECT name, year FROM prof WHERE id = $id".unique[(String, Int)]
-    ss <- tsql"SELECT id FROM prof WHERE parent = $id".as[List[Int]]
+    d  <- sql"SELECT name, year FROM prof WHERE id = $id".query[(String, Int)].unique
+    ss <- sql"SELECT id FROM prof WHERE parent = $id".query[Int].to[List]
   } yield ProfF(d._1, d._2, ss)
 ```
 
 Read two layers deep, then stop at ids.
 
-```tut:silent
+```scala mdoc:silent
 def readNode2(id: Int): ConnectionIO[ProfF[ProfF[Int]]] =
   readNode(id).flatMap(_.traverse(readNode))
 ```
@@ -1300,24 +1510,47 @@ def readNode2(id: Int): ConnectionIO[ProfF[ProfF[Int]]] =
 
 Construct a program to read a `ProfF` whose students are database ids.
 
-```tut:silent
+```scala mdoc:invisible:reset
+import cats._
+import cats.implicits._
+import doobie._
+import doobie.implicits._
+
+case class ProfF[A](name: String, year: Int, students: List[A]){
+  override def toString = s"ProfF($name, $year, «${students.length}»)"
+}
+   implicit val ProfFTraverse: Traverse[ProfF] =
+      new Traverse[ProfF] {
+
+        override def traverse[G[_]: Applicative, A, B](fa: ProfF[A])(f: A => G[B]): G[ProfF[B]] =
+          fa.students.map(f).sequence.map(ss => fa.copy(students = ss))
+
+        override def foldLeft[A, B](fa: ProfF[A], b: B)(f: (B, A) => B): B =
+          fa.students.foldLeft(b)(f)
+
+        override def foldRight[A, B](fa: ProfF[A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] =
+          fa.students.foldRight(lb)(f)
+      }
+```
+
+```scala mdoc
 def readNode(id: Int): ConnectionIO[ProfF[Int]] =
   for {
-    d  <- tsql"SELECT name, year FROM prof WHERE id = $id".unique[(String, Int)]
-    ss <- tsql"SELECT id FROM prof WHERE parent = $id".as[List[Int]]
+    d  <- sql"SELECT name, year FROM prof WHERE id = $id".query[(String, Int)].unique
+    ss <- sql"SELECT id FROM prof WHERE parent = $id".query[Int].to[List]
   } yield ProfF(d._1, d._2, ss)
 ```
 
 Read two layers deep, then stop at ids.
 
-```tut:silent
+```scala mdoc:silent
 def readNode2(id: Int): ConnectionIO[ProfF[ProfF[Int]]] =
   readNode(id).flatMap(_.traverse(readNode))
 ```
 
 Three, why not?
 
-```tut:silent
+```scala mdoc:silent
 def readNode3(id: Int): ConnectionIO[ProfF[ProfF[ProfF[Int]]]] =
   readNode(id).flatMap(_.traverse(readNode2))
 ```
@@ -1335,26 +1568,47 @@ def readNode3(id: Int): ConnectionIO[ProfF[ProfF[ProfF[Int]]]] =
 
 Construct a program to read a `ProfF` whose students are database ids.
 
-```tut:silent
+```scala mdoc:invisible:reset
+
+import cats._
+import cats.implicits._
+import cats.free.Free
+import doobie._
+import doobie.implicits._
+
+case class ProfF[A](name: String, year: Int, students: List[A]){
+  override def toString = s"ProfF($name, $year, «${students.length}»)"
+}
+   implicit val ProfFTraverse: Traverse[ProfF] =
+      new Traverse[ProfF] {
+
+        override def traverse[G[_]: Applicative, A, B](fa: ProfF[A])(f: A => G[B]): G[ProfF[B]] =
+          fa.students.map(f).sequence.map(ss => fa.copy(students = ss))
+
+        override def foldLeft[A, B](fa: ProfF[A], b: B)(f: (B, A) => B): B =
+          fa.students.foldLeft(b)(f)
+
+        override def foldRight[A, B](fa: ProfF[A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] =
+          fa.students.foldRight(lb)(f)
+      }
+```
+
+```scala mdoc:silent
 def readNode(id: Int): ConnectionIO[ProfF[Int]] =
   for {
-    d  <- tsql"SELECT name, year FROM prof WHERE id = $id".unique[(String, Int)]
-    ss <- tsql"SELECT id FROM prof WHERE parent = $id".as[List[Int]]
+    d  <- sql"SELECT name, year FROM prof WHERE id = $id".query[(String, Int)].unique
+    ss <- sql"SELECT id FROM prof WHERE parent = $id".query[Int].to[List]
   } yield ProfF(d._1, d._2, ss)
 ```
 
 An arbitrary sub-graph.
 
-```tut:invisible
-import scalaz.Free
-```
-
-```tut:silent
+```scala mdoc:silent
 /** Read a tree that stops at even ids. */
 def readEven(id: Int): ConnectionIO[Free[ProfF, Int]] = {
-  if (id % 2 == 0) Free.pure(id).point[ConnectionIO]
+  if (id % 2 == 0) Free.pure[ProfF, Int](id).pure[ConnectionIO]
   else readNode(id).flatMap { pi =>
-    pi.traverseU(readEven).map(Free.roll)
+    pi.traverse(readEven).map(Free.roll)
   }
 }
 ```
@@ -1373,22 +1627,47 @@ def readEven(id: Int): ConnectionIO[Free[ProfF, Int]] = {
 
 Construct a program to read a `ProfF` whose students are database ids.
 
-```tut:silent
+```scala mdoc:invisible:reset
+
+import cats._
+import cats.implicits._
+import cats.free.Cofree
+import doobie._
+import doobie.implicits._
+
+case class ProfF[A](name: String, year: Int, students: List[A]){
+  override def toString = s"ProfF($name, $year, «${students.length}»)"
+}
+   implicit val ProfFTraverse: Traverse[ProfF] =
+      new Traverse[ProfF] {
+
+        override def traverse[G[_]: Applicative, A, B](fa: ProfF[A])(f: A => G[B]): G[ProfF[B]] =
+          fa.students.map(f).sequence.map(ss => fa.copy(students = ss))
+
+        override def foldLeft[A, B](fa: ProfF[A], b: B)(f: (B, A) => B): B =
+          fa.students.foldLeft(b)(f)
+
+        override def foldRight[A, B](fa: ProfF[A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] =
+          fa.students.foldRight(lb)(f)
+      }
+```
+
+```scala mdoc:silent
 def readNode(id: Int): ConnectionIO[ProfF[Int]] =
   for {
-    d  <- tsql"SELECT name, year FROM prof WHERE id = $id".unique[(String, Int)]
-    ss <- tsql"SELECT id FROM prof WHERE parent = $id".as[List[Int]]
+    d  <- sql"SELECT name, year FROM prof WHERE id = $id".query[(String, Int)].unique
+    ss <- sql"SELECT id FROM prof WHERE parent = $id".query[Int].to[List]
   } yield ProfF(d._1, d._2, ss)
 ```
 
 Construct a program to read a `ProfF` tree annotated with database ids.
 
-```tut:silent
+```scala mdoc:silent
 def readTree(id: Int): ConnectionIO[Cofree[ProfF, Int]] =
   readNode(id).flatMap { pi =>
     pi.map(readTree)      // ProfF[ConnectionIO[Cofree[ProfF, Int]]]
       .sequence           // ConnectionIO[ProfF[Cofree[ProfF, Int]]]
-      .map(Cofree(id, _)) // ConnectionIO[Cofree[ProfF, Int]]
+      .map(r => Cofree(id, Eval.now(r))) // ConnectionIO[Cofree[ProfF, Int]]
   }
 ```
 
@@ -1401,22 +1680,46 @@ def readTree(id: Int): ConnectionIO[Cofree[ProfF, Int]] =
 # And now read it back.
 
 Construct a program to read a `ProfF` whose students are database ids.
+```scala mdoc:invisible:reset
 
-```tut:silent
+import cats._
+import cats.implicits._
+import cats.free.Cofree
+import doobie._
+import doobie.implicits._
+
+case class ProfF[A](name: String, year: Int, students: List[A]){
+  override def toString = s"ProfF($name, $year, «${students.length}»)"
+}
+   implicit val ProfFTraverse: Traverse[ProfF] =
+      new Traverse[ProfF] {
+
+        override def traverse[G[_]: Applicative, A, B](fa: ProfF[A])(f: A => G[B]): G[ProfF[B]] =
+          fa.students.map(f).sequence.map(ss => fa.copy(students = ss))
+
+        override def foldLeft[A, B](fa: ProfF[A], b: B)(f: (B, A) => B): B =
+          fa.students.foldLeft(b)(f)
+
+        override def foldRight[A, B](fa: ProfF[A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] =
+          fa.students.foldRight(lb)(f)
+      }
+```
+
+```scala mdoc:silent
 def readNode(id: Int): ConnectionIO[ProfF[Int]] =
   for {
-    d  <- tsql"SELECT name, year FROM prof WHERE id = $id".unique[(String, Int)]
-    ss <- tsql"SELECT id FROM prof WHERE parent = $id".as[List[Int]]
+    d  <- sql"SELECT name, year FROM prof WHERE id = $id".query[(String, Int)].unique
+    ss <- sql"SELECT id FROM prof WHERE parent = $id".query[Int].to[List]
   } yield ProfF(d._1, d._2, ss)
 ```
 
 Construct a program to read a `ProfF` tree *annotated* with database ids.
 
-```tut:silent
+```scala mdoc:silent
 def readTree(id: Int): ConnectionIO[Cofree[ProfF, Int]] =
   readNode(id).flatMap { pi =>
     pi.traverse(readTree)
-      .map(Cofree(id, _))
+      .map(r => Cofree(id, Eval.now(r)))
   }
 ```
 
@@ -1428,20 +1731,44 @@ def readTree(id: Int): ConnectionIO[Cofree[ProfF, Int]] =
 # And now read it back.
 
 Construct a program to read a `ProfF` whose students are database ids.
+```scala mdoc:invisible:reset
 
-```tut:silent
+import cats._
+import cats.implicits._
+import cats.free.Cofree
+import doobie._
+import doobie.implicits._
+
+case class ProfF[A](name: String, year: Int, students: List[A]){
+  override def toString = s"ProfF($name, $year, «${students.length}»)"
+}
+   implicit val ProfFTraverse: Traverse[ProfF] =
+      new Traverse[ProfF] {
+
+        override def traverse[G[_]: Applicative, A, B](fa: ProfF[A])(f: A => G[B]): G[ProfF[B]] =
+          fa.students.map(f).sequence.map(ss => fa.copy(students = ss))
+
+        override def foldLeft[A, B](fa: ProfF[A], b: B)(f: (B, A) => B): B =
+          fa.students.foldLeft(b)(f)
+
+        override def foldRight[A, B](fa: ProfF[A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] =
+          fa.students.foldRight(lb)(f)
+      }
+```
+
+```scala mdoc:silent
 def readNode(id: Int): ConnectionIO[ProfF[Int]] =
   for {
-    d  <- tsql"SELECT name, year FROM prof WHERE id = $id".unique[(String, Int)]
-    ss <- tsql"SELECT id FROM prof WHERE parent = $id".as[List[Int]]
+    d  <- sql"SELECT name, year FROM prof WHERE id = $id".query[(String, Int)].unique
+    ss <- sql"SELECT id FROM prof WHERE parent = $id".query[Int].to[List]
   } yield ProfF(d._1, d._2, ss)
 ```
 
 Construct a program to read a `ProfF` tree *annotated* with database ids.
 
-```tut:silent
+```scala mdoc:silent
 def readTree(id: Int): ConnectionIO[Cofree[ProfF, Int]] =
-  readNode(id).flatMap(_.traverse(readTree).map(Cofree(id, _)))
+  readNode(id).flatMap(_.traverse(readTree).map(r => Cofree(id, Eval.now(r))))
 ```
 
 ???
@@ -1454,20 +1781,44 @@ def readTree(id: Int): ConnectionIO[Cofree[ProfF, Int]] =
 # And now read it back.
 
 Construct a program to read a `ProfF` whose students are database ids.
+```scala mdoc:invisible:reset
 
-```tut:silent
+import cats._
+import cats.implicits._
+import cats.free.Cofree
+import doobie._
+import doobie.implicits._
+
+case class ProfF[A](name: String, year: Int, students: List[A]){
+  override def toString = s"ProfF($name, $year, «${students.length}»)"
+}
+   implicit val ProfFTraverse: Traverse[ProfF] =
+      new Traverse[ProfF] {
+
+        override def traverse[G[_]: Applicative, A, B](fa: ProfF[A])(f: A => G[B]): G[ProfF[B]] =
+          fa.students.map(f).sequence.map(ss => fa.copy(students = ss))
+
+        override def foldLeft[A, B](fa: ProfF[A], b: B)(f: (B, A) => B): B =
+          fa.students.foldLeft(b)(f)
+
+        override def foldRight[A, B](fa: ProfF[A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] =
+          fa.students.foldRight(lb)(f)
+      }
+```
+
+```scala mdoc:silent
 def readNode(id: Int): ConnectionIO[ProfF[Int]] =
   for {
-    d  <- tsql"SELECT name, year FROM prof WHERE id = $id".unique[(String, Int)]
-    ss <- tsql"SELECT id FROM prof WHERE parent = $id".as[List[Int]]
+    d  <- sql"SELECT name, year FROM prof WHERE id = $id".query[(String, Int)].unique
+    ss <- sql"SELECT id FROM prof WHERE parent = $id".query[Int].to[List]
   } yield ProfF(d._1, d._2, ss)
 ```
 
 Construct a program to read a `ProfF` tree *annotated* with database ids.
 
-```tut:silent
+```scala mdoc:silent
 def readTree(id: Int)(f: Int => ConnectionIO[ProfF[Int]]): ConnectionIO[Cofree[ProfF, Int]] =
-  f(id).flatMap(_.traverse(readTree(_)(f)).map(Cofree(id, _)))
+  f(id).flatMap(_.traverse(readTree(_)(f)).map(r => Cofree(id, Eval.now(r))))
 ```
 
 ???
@@ -1480,19 +1831,43 @@ def readTree(id: Int)(f: Int => ConnectionIO[ProfF[Int]]): ConnectionIO[Cofree[P
 
 Construct a program to read a `ProfF` whose students are database ids.
 
-```tut:silent
+```scala mdoc:invisible:reset
+import cats._
+import cats.implicits._
+import cats.free.Cofree
+import doobie._
+import doobie.implicits._
+
+case class ProfF[A](name: String, year: Int, students: List[A]){
+  override def toString = s"ProfF($name, $year, «${students.length}»)"
+}
+   implicit val ProfFTraverse: Traverse[ProfF] =
+      new Traverse[ProfF] {
+
+        override def traverse[G[_]: Applicative, A, B](fa: ProfF[A])(f: A => G[B]): G[ProfF[B]] =
+          fa.students.map(f).sequence.map(ss => fa.copy(students = ss))
+
+        override def foldLeft[A, B](fa: ProfF[A], b: B)(f: (B, A) => B): B =
+          fa.students.foldLeft(b)(f)
+
+        override def foldRight[A, B](fa: ProfF[A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] =
+          fa.students.foldRight(lb)(f)
+      }
+```
+
+```scala mdoc:silent
 def readNode(id: Int): ConnectionIO[ProfF[Int]] =
   for {
-    d  <- tsql"SELECT name, year FROM prof WHERE id = $id".unique[(String, Int)]
-    ss <- tsql"SELECT id FROM prof WHERE parent = $id".as[List[Int]]
+    d  <- sql"SELECT name, year FROM prof WHERE id = $id".query[(String, Int)].unique
+    ss <- sql"SELECT id FROM prof WHERE parent = $id".query[Int].to[List]
   } yield ProfF(d._1, d._2, ss)
 ```
 
 Construct a program to read a `ProfF` tree *annotated* with database ids.
 
-```tut:silent
+```scala mdoc:silent
 def readTree[M[_]: Monad](id: Int)(f: Int => M[ProfF[Int]]): M[Cofree[ProfF, Int]] =
-  f(id).flatMap(_.traverse(readTree(_)(f)).map(Cofree(id, _)))
+  f(id).flatMap(_.traverse(readTree(_)(f)).map(r => Cofree(id, Eval.now(r))))
 ```
 
 ???
@@ -1504,21 +1879,43 @@ def readTree[M[_]: Monad](id: Int)(f: Int => M[ProfF[Int]]): M[Cofree[ProfF, Int
 # And now read it back.
 
 Construct a program to read a `ProfF` whose students are database ids.
+```scala mdoc:invisible:reset
+import cats._
+import cats.implicits._
+import cats.free.Cofree
+import doobie._
+import doobie.implicits._
 
-```tut:silent
+case class ProfF[A](name: String, year: Int, students: List[A]){
+  override def toString = s"ProfF($name, $year, «${students.length}»)"
+}
+   implicit val ProfFTraverse: Traverse[ProfF] =
+      new Traverse[ProfF] {
+
+        override def traverse[G[_]: Applicative, A, B](fa: ProfF[A])(f: A => G[B]): G[ProfF[B]] =
+          fa.students.map(f).sequence.map(ss => fa.copy(students = ss))
+
+        override def foldLeft[A, B](fa: ProfF[A], b: B)(f: (B, A) => B): B =
+          fa.students.foldLeft(b)(f)
+
+        override def foldRight[A, B](fa: ProfF[A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] =
+          fa.students.foldRight(lb)(f)
+      }
+```
+```scala mdoc:silent
 def readNode(id: Int): ConnectionIO[ProfF[Int]] =
   for {
-    d  <- tsql"SELECT name, year FROM prof WHERE id = $id".unique[(String, Int)]
-    ss <- tsql"SELECT id FROM prof WHERE parent = $id".as[List[Int]]
+    d  <- sql"SELECT name, year FROM prof WHERE id = $id".query[(String, Int)].unique
+    ss <- sql"SELECT id FROM prof WHERE parent = $id".query[Int].to[List]
   } yield ProfF(d._1, d._2, ss)
 ```
 
 Construct a program to read a `ProfF` tree *annotated* with database ids.
 
 
-```tut:silent
+```scala mdoc:silent
 def readTree[M[_]: Monad, F[_]: Traverse](id: Int)(f: Int => M[F[Int]]): M[Cofree[F, Int]] =
-  f(id).flatMap(_.traverse(readTree(_)(f)).map(Cofree(id, _)))
+  f(id).flatMap(_.traverse(readTree(_)(f)).map(r => Cofree(id, Eval.now(r))))
 ```
 
 ???
@@ -1530,20 +1927,42 @@ def readTree[M[_]: Monad, F[_]: Traverse](id: Int)(f: Int => M[F[Int]]): M[Cofre
 # And now read it back.
 
 Construct a program to read a `ProfF` whose students are database ids.
+```scala mdoc:invisible:reset
+import cats._
+import cats.implicits._
+import cats.free.Cofree
+import doobie._
+import doobie.implicits._
 
-```tut:silent
+case class ProfF[A](name: String, year: Int, students: List[A]){
+  override def toString = s"ProfF($name, $year, «${students.length}»)"
+}
+   implicit val ProfFTraverse: Traverse[ProfF] =
+      new Traverse[ProfF] {
+
+        override def traverse[G[_]: Applicative, A, B](fa: ProfF[A])(f: A => G[B]): G[ProfF[B]] =
+          fa.students.map(f).sequence.map(ss => fa.copy(students = ss))
+
+        override def foldLeft[A, B](fa: ProfF[A], b: B)(f: (B, A) => B): B =
+          fa.students.foldLeft(b)(f)
+
+        override def foldRight[A, B](fa: ProfF[A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] =
+          fa.students.foldRight(lb)(f)
+      }
+```
+```scala mdoc:silent
 def readNode(id: Int): ConnectionIO[ProfF[Int]] =
   for {
-    d  <- tsql"SELECT name, year FROM prof WHERE id = $id".unique[(String, Int)]
-    ss <- tsql"SELECT id FROM prof WHERE parent = $id".as[List[Int]]
+    d  <- sql"SELECT name, year FROM prof WHERE id = $id".query[(String, Int)].unique
+    ss <- sql"SELECT id FROM prof WHERE parent = $id".query[Int].to[List]
   } yield ProfF(d._1, d._2, ss)
 ```
 
 Construct a program to read a `ProfF` tree *annotated* with database ids.
 
-```tut:silent
+```scala mdoc:silent
 def readTree[M[_]: Monad, F[_]: Traverse, A](a: A)(f: A => M[F[A]]): M[Cofree[F, A]] =
-  f(a).flatMap(_.traverse(readTree(_)(f)).map(Cofree(a, _)))
+  f(a).flatMap(_.traverse(readTree(_)(f)).map(r => Cofree(a, Eval.now(r))))
 ```
 
 ???
@@ -1554,20 +1973,42 @@ def readTree[M[_]: Monad, F[_]: Traverse, A](a: A)(f: A => M[F[A]]): M[Cofree[F,
 # And now read it back.
 
 Construct a program to read a `ProfF` whose students are database ids.
+```scala mdoc:invisible:reset
+import cats._
+import cats.implicits._
+import cats.free.Cofree
+import doobie._
+import doobie.implicits._
 
-```tut:silent
+case class ProfF[A](name: String, year: Int, students: List[A]){
+  override def toString = s"ProfF($name, $year, «${students.length}»)"
+}
+   implicit val ProfFTraverse: Traverse[ProfF] =
+      new Traverse[ProfF] {
+
+        override def traverse[G[_]: Applicative, A, B](fa: ProfF[A])(f: A => G[B]): G[ProfF[B]] =
+          fa.students.map(f).sequence.map(ss => fa.copy(students = ss))
+
+        override def foldLeft[A, B](fa: ProfF[A], b: B)(f: (B, A) => B): B =
+          fa.students.foldLeft(b)(f)
+
+        override def foldRight[A, B](fa: ProfF[A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] =
+          fa.students.foldRight(lb)(f)
+      }
+```
+```scala mdoc:silent
 def readNode(id: Int): ConnectionIO[ProfF[Int]] =
   for {
-    d  <- tsql"SELECT name, year FROM prof WHERE id = $id".unique[(String, Int)]
-    ss <- tsql"SELECT id FROM prof WHERE parent = $id".as[List[Int]]
+    d  <- sql"SELECT name, year FROM prof WHERE id = $id".query[(String, Int)].unique
+    ss <- sql"SELECT id FROM prof WHERE parent = $id".query[Int].to[List]
   } yield ProfF(d._1, d._2, ss)
 ```
 
 Construct a program to read a `ProfF` tree *annotated* with database ids.
 
-```tut:silent
+```scala mdoc:silent
 def unfoldCM[M[_]: Monad, F[_]: Traverse, A](a: A)(f: A => M[F[A]]): M[Cofree[F, A]] =
-  f(a).flatMap(_.traverse(unfoldCM(_)(f)).map(Cofree(a, _)))
+  f(a).flatMap(_.traverse(unfoldCM(_)(f)).map(r => Cofree(a, Eval.now(r))))
 ```
 
 ???
@@ -1586,20 +2027,57 @@ def unfoldCM[M[_]: Monad, F[_]: Traverse, A](a: A)(f: A => M[F[A]]): M[Cofree[F,
 # And now read it back.
 
 Construct a program to read a `ProfF` whose students are database ids.
+```scala mdoc:invisible:reset
+import cats._
+import cats.effect.IO
+import cats.implicits._
+import cats.free.Cofree
+import doobie._
+import doobie.implicits._
+import scala.concurrent.ExecutionContext
 
-```tut:silent
+case class ProfF[A](name: String, year: Int, students: List[A]){
+  override def toString = s"ProfF($name, $year, «${students.length}»)"
+}
+   implicit val ProfFTraverse: Traverse[ProfF] =
+      new Traverse[ProfF] {
+
+        override def traverse[G[_]: Applicative, A, B](fa: ProfF[A])(f: A => G[B]): G[ProfF[B]] =
+          fa.students.map(f).sequence.map(ss => fa.copy(students = ss))
+
+        override def foldLeft[A, B](fa: ProfF[A], b: B)(f: (B, A) => B): B =
+          fa.students.foldLeft(b)(f)
+
+        override def foldRight[A, B](fa: ProfF[A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] =
+          fa.students.foldRight(lb)(f)
+      }
+  implicit val cs = IO.contextShift(ExecutionContext.global)
+  val xa = Transactor.fromDriverManager[IO](
+    "org.postgresql.Driver",// driver
+    "jdbc:postgresql:prof", // database
+    "postgres", ""          // user, password
+  )
+
+  def ioDrawCofree[F[_]: Traverse, A](fa: Cofree[F, A], indent: Int = 0): IO[Unit] =
+    for {
+      _ <- IO(print(" " * indent))
+      _ <- IO(println(s"${fa.head} :< ${fa.tail}"))
+      _ <- fa.tail.value.traverse(ioDrawCofree(_, indent + 1))
+   } yield ()
+```
+```scala mdoc:silent
 def readNode(id: Int): ConnectionIO[ProfF[Int]] =
   for {
-    d  <- tsql"SELECT name, year FROM prof WHERE id = $id".unique[(String, Int)]
-    ss <- tsql"SELECT id FROM prof WHERE parent = $id".as[List[Int]]
+    d  <- sql"SELECT name, year FROM prof WHERE id = $id".query[(String, Int)].unique
+    ss <- sql"SELECT id FROM prof WHERE parent = $id".query[Int].to[List]
   } yield ProfF(d._1, d._2, ss)
 ```
 
 Construct a program to read a `ProfF` tree *annotated* with database ids.
 
-```tut:silent
+```scala mdoc:silent
 def unfoldCM[M[_]: Monad, F[_]: Traverse, A](a: A)(f: A => M[F[A]]): M[Cofree[F, A]] =
-  f(a).flatMap(_.traverse(unfoldCM(_)(f)).map(Cofree(a, _)))
+  f(a).flatMap(_.traverse(unfoldCM(_)(f)).map(r => Cofree(a, Eval.now(r))))
 
 def readTree(id: Int): ConnectionIO[Cofree[ProfF, Int]] =
   unfoldCM(id)(readNode)
@@ -1615,20 +2093,20 @@ def readTree(id: Int): ConnectionIO[Cofree[ProfF, Int]] =
 
 Let's read Hilbert's sub-tree.
 
-```tut:silent
+```scala mdoc:silent
 val hilbert: ConnectionIO[Int] =
-  tsql"""
+  sql"""
     select max(id) -- sorry
     from prof
     where name like '%Hilbert'
-  """.unique[Int]
+  """.query[Int].unique
 
 val io: IO[Cofree[ProfF, Int]] =
   (hilbert flatMap readTree).transact(xa)
 ```
 
-```tut
-io.flatMap(ioDrawCofree(_)).unsafePerformIO
+```scala mdoc
+io.flatMap(ioDrawCofree(_)).unsafeRunSync()
 ```
 
 ???
@@ -1663,7 +2141,7 @@ class: center, middle
 
 Rob Norris • @tpolecat
 
-I will tweet a link to slides and code (not up yet, sorry).
+Link to slides and code `https://github.com/tpolecat/cofree`.
 
 ## Learn You a Recursion Scheme
 
@@ -1674,22 +2152,6 @@ I will tweet a link to slides and code (not up yet, sorry).
 Presentations, Videos, Doc at `tpolecat/doobie` on GitHub
 
 Online Exercises at `scala-exercises.org` (!)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
  </textarea>

@@ -1,0 +1,14 @@
+---
+version: "2"
+services:
+  postgres:
+    image: postgres:10.5-alpine
+    command: "postgres -c 'max_connections=200' -c 'log_statement=all' -c 'log_line_prefix=%t[%a][%p]'"
+    volumes:
+      - ./data:/docker-entrypoint-initdb.d
+    environment:
+      POSTGRES_PASSWORD: ""
+      POSTGRES_USER: postgres
+      POSTGRES_DB: prof
+    ports:
+      - 5432:5432

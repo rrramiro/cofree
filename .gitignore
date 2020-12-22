@@ -32,3 +32,10 @@ bin/
 
 # This project
 tut-out/
+.history
+.metals
+.vscode
+.bsp
+.bloop
+.idea
+metals.sbt

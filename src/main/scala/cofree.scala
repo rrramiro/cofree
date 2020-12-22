@@ -1,17 +1,19 @@
-import atto._, Atto._, atto.compat.scalaz._
-import scalaz._, Scalaz.{ char => _, _ }, scalaz.effect._
+import atto._
+import Atto._
+import cats._
+import cats.free._
+import cats.implicits._
+import cats.effect._
 import shapeless.Nat
-import doobie.imports._
-import doobie.contrib.postgresql.pgtypes._
-
-import doobie.tsql._
-import doobie.tsql.postgres._
+import doobie._
+import doobie.implicits._
+import doobie.postgres.implicits._
 
 /**
  * Companion code for the talk "Database Programming with Fixpoint Types". See the README for
  * information on setting up the test database.
  */
-object cofree extends Extras with SafeApp {
+object cofree extends Extras with IOApp {
 
   /** Fixpoint for type constructor `F`. */
   case class Fix[F[_]](unfix: F[Fix[F]])
@@ -27,8 +29,15 @@ object cofree extends Extras with SafeApp {
     // in the Cats documentation (http://typelevel.org/cats/tut/traverse.html).
     implicit val ProfFTraverse: Traverse[ProfF] =
       new Traverse[ProfF] {
-        def traverseImpl[G[_]: Applicative, A, B](fa: ProfF[A])(f: A => G[B]): G[ProfF[B]] =
+
+        override def traverse[G[_]: Applicative, A, B](fa: ProfF[A])(f: A => G[B]): G[ProfF[B]] =
           fa.students.map(f).sequence.map(ss => fa.copy(students = ss))
+
+        override def foldLeft[A, B](fa: ProfF[A], b: B)(f: (B, A) => B): B =
+          fa.students.foldLeft(b)(f)
+
+        override def foldRight[A, B](fa: ProfF[A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] =
+          fa.students.foldRight(lb)(f)
       }
 
   }
@@ -80,7 +89,7 @@ object cofree extends Extras with SafeApp {
   /** Parser for un-annotated ProfF. */
   def prof(n: Int): Parser[Fix[ProfF]] =
     for {
-      _    <- char(' ').replicateM(n)
+      _    <- char(' ').replicateA(n)
       name <- ctString
       uni  <- ctString
       year <- int <* char('\n')
@@ -91,13 +100,13 @@ object cofree extends Extras with SafeApp {
   def posProf(n: Int): Parser[Cofree[ProfF, (Int, Int)]] =
     for {
       p0   <- pos
-      _    <- char(' ').replicateM(n)
+      _    <- char(' ').replicateA(n)
       name <- ctString
       uni  <- ctString
       year <- int <* char('\n')
       ss   <- many(posProf(n + 2))
       p1   <- pos
-    } yield Cofree((p0, p1), ProfF(name, uni, year, ss))
+    } yield Cofree((p0, p1), Eval.now(ProfF(name, uni, year, ss)))
 
   ///
   /// INSERT
@@ -105,11 +114,11 @@ object cofree extends Extras with SafeApp {
 
   /** Insert a node with the given parent, disregarding children, yielding the generated Id. */
   def insertNode(parent: Option[Int], p: ProfF[_]): ConnectionIO[Int] =
-    tsql"""
+    sql"""
       INSERT INTO prof_node (parent, name, uni, year)
       VALUES ($parent, ${p.name}, ${p.uni}, ${p.year})
       RETURNING id
-    """.unique[Int]
+    """.query[Int].unique
 
   /**
    * Insert a tree rooted at `p` with an optional parent, yielding an equivalent tree annotated
@@ -119,18 +128,19 @@ object cofree extends Extras with SafeApp {
     for {
       h <- insertNode(parent, fp.unfix)
       t <- fp.unfix.traverse(insertTree(_, Some(h)))
-    } yield Cofree(h, t)
+    } yield Cofree(h, Eval.now(t))
 
   ///
   /// READ
   ///
 
   /** Read a ProfF with the given id, yielding a ProfF that references its children by id. */
-  def readFlat(id: Int): ConnectionIO[ProfF[Int]] =
+  def readFlat(id: Int): ConnectionIO[ProfF[Int]] = {
     for {
-      data <- tsql"SELECT name, uni, year FROM prof_node WHERE id = $id".unique[(String, String, Int)]
-      kids <- tsql"SELECT id FROM prof_node WHERE parent = $id".as[List[Int]]
+      data <- sql"SELECT name, uni, year FROM prof_node WHERE id = $id".query[(String, String, Int)].unique
+      kids <- sql"SELECT id FROM prof_node WHERE parent = $id".query[Int].to[List]
     } yield ProfF(data._1, data._2, data._3, kids)
+  }
 
   /** Read two levels, then stop at Ids. */
   def readFlat2(id: Int): ConnectionIO[ProfF[ProfF[Int]]] =
@@ -153,7 +163,7 @@ object cofree extends Extras with SafeApp {
 
   /** Monadic cofree corecursion. */
   def unfoldCM[M[_]: Monad, F[_]: Traverse, A](id: A)(f: A => M[F[A]]): M[Cofree[F, A]] =
-    f(id).flatMap(_.traverse(unfoldCM(_)(f)).map(Cofree(id, _)))
+    f(id).flatMap(_.traverse(unfoldCM(_)(f)).map(a => Cofree(id, Eval.now(a))))
 
   /** Read an id-annotated tree. */
   def read(id: Int): ConnectionIO[Cofree[ProfF, Int]] =
@@ -161,9 +171,9 @@ object cofree extends Extras with SafeApp {
 
   /** Read a tree that stops at even ids. */
   def readEven(id: Int): ConnectionIO[Free[ProfF, Int]] =
-    if (id % 2 == 0) Free.pure(id).point[ConnectionIO]
+    if (id % 2 == 0) Free.pure[ProfF, Int](id).pure[ConnectionIO]
     else readFlat(id).flatMap { i =>
-      i.traverseU(readEven).map(Free.roll)
+      i.traverse(readEven).map(Free.roll )
     }
 
   ///
@@ -172,33 +182,34 @@ object cofree extends Extras with SafeApp {
 
   /** Cofree corecursion (not-monadic, for reference). */
   def unfoldC[F[_]: Functor, A](id: A)(f: A => F[A]): Cofree[F, A] =
-    Cofree(id, f(id).map(unfoldC(_)(f)))
+    Cofree(id, Eval.now(f(id).map(unfoldC(_)(f))))
 
   /** Read an id-annotated tree all at once and assemble it in memory. */
-  def read2(id: Int): ConnectionIO[Cofree[ProfF, Int]] =
-    tsql"""
-      WITH RECURSIVE rec(id, parent, name, uni, year, students) AS(
-       SELECT * FROM prof_closure WHERE id = $id
-       UNION ALL SELECT p.* FROM prof_closure p, rec r
-        WHERE r.id = p.parent
-      ) SELECT id, name, uni, year, students
-        FROM rec;
-    """.as[Int => ProfF[Int]].map(unfoldC(id)(_))
-
+  def read2(id: Int): ConnectionIO[Cofree[ProfF, Int]] = {
+    sql"""
+    WITH RECURSIVE rec(id, parent, name, uni, year, students) AS(
+     SELECT * FROM prof_closure WHERE id = $id
+     UNION ALL SELECT p.* FROM prof_closure p, rec r
+      WHERE r.id = p.parent
+    ) SELECT id, name, uni, year, students
+      FROM rec;
+  """.query[(Int,String, String, Int, List[Int])].map{
+      r => r._1 -> ProfF[Int](r._2, r._3, r._4, r._5)
+    }.toMap[Int, ProfF[Int]].map(unfoldC(id)(_))
+  }
   ///
   /// ENTRY POINT
   ///
 
   /** A transactor abstracts over connection pools and effect types. */
-  val xa = DriverManagerTransactor[IO](
+  val xa = Transactor.fromDriverManager[IO](
     "org.postgresql.Driver",// driver
     "jdbc:postgresql:prof", // database
     "postgres", ""          // user, password
   )
 
   /** Our main method, via SafeApp */
-  override def runc: IO[Unit] = {
-
+  override def run(args: List[String]): IO[ExitCode] = {
     // Parse the data above
     val p: Fix[ProfF] =
       (prof(0) <~ endOfInput).parseOnly(data).option.get // yolo
@@ -209,20 +220,22 @@ object cofree extends Extras with SafeApp {
 
         // insert and draw
         t <- insertTree(p)
+        _ <- drawLine
         _ <- draw(t)
 
         // Read back and draw
         t <- read(t.head)
+        _ <- drawLine
         _ <- draw(t)
-
         // Again, all at once
         t <- read2(t.head)
+        _ <- drawLine
         _ <- draw(t)
 
       } yield ()
 
     // our IO program
-    action.transact(xa)
+    action.transact(xa).as(ExitCode.Success)
 
   }
 
